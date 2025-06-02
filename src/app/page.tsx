@@ -5,8 +5,8 @@ import SectionHeader from "@/components/dashboard/section-header";
 
 export default function Home() {
   return (
-    <div>
-      <div className="max-w-7xl m-auto">
+    <div className="bg-[#F3F4F6]">
+      <div className="max-w-5xl m-auto">
         <Header />
         <Streak />
         <SectionHeader title="AfterNoon" />

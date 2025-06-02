@@ -1,6 +1,31 @@
 "use client";
 import React, { useState } from "react";
-import { Calendar, ChevronDown, ArrowLeft } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ChevronDown,
+  ArrowLeft,
+  Save,
+  Plus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface Pet {
   id: string;
@@ -28,15 +53,25 @@ const categories: Category[] = [
   { id: "4", name: "Exercise", icon: "🏃", color: "bg-orange-500" },
 ];
 
+const frequencies = [
+  { value: "once", label: "Once" },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+];
+
 const PetReminderForm = () => {
-  const [selectedPet, setSelectedPet] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedPet, setSelectedPet] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [reminderText, setReminderText] = useState("");
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [showEndDate, setShowEndDate] = useState(false);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [reminderTime, setReminderTime] = useState("12:06");
+  const [frequency, setFrequency] = useState("daily");
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
 
   const handleSave = () => {
     console.log("Saving reminder:", {
@@ -46,198 +81,291 @@ const PetReminderForm = () => {
       notes,
       startDate,
       endDate,
+      time: reminderTime,
+      frequency,
     });
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, ".");
+    // Add your save logic here
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-br from-blue-200/30 to-indigo-300/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-purple-200/30 to-indigo-300/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/50 sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-6 py-5 flex items-center justify-between">
-          <button
-            className="p-2 hover:bg-gray-100/80 rounded-xl transition-all duration-200 border-none bg-transparent cursor-pointer"
+      <div className="bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 hover:bg-gray-100 rounded-full"
             onClick={() => (window.location.href = "/dashboard")}
           >
             <ArrowLeft className="h-5 w-5 text-gray-600" />
-          </button>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            Add Reminder
-          </h1>
-          <button
+          </Button>
+          <h1 className="text-lg font-semibold text-gray-900">Add Reminder</h1>
+          <Button
             onClick={handleSave}
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium border-none cursor-pointer"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             Save
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto p-6 space-y-8 relative z-10">
+      <div className="max-w-md mx-auto p-4 space-y-6">
         {/* Pet and Category Selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <span className="w-2 h-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></span>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
               Select Pet
             </label>
-            <div className="relative">
-              <select
-                value={selectedPet}
-                onChange={(e) => setSelectedPet(e.target.value)}
-                className="w-full bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 h-14 px-4 text-gray-700 font-medium appearance-none cursor-pointer"
-              >
-                <option value="">Browny</option>
+            <Select value={selectedPet} onValueChange={setSelectedPet}>
+              <SelectTrigger className="w-full bg-white border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-2">
+                  <SelectValue placeholder="Browny" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-white border-gray-200 rounded-xl shadow-lg">
                 {pets.map((pet) => (
-                  <option key={pet.id} value={pet.id}>
-                    {pet.avatar} {pet.name}
-                  </option>
+                  <SelectItem
+                    key={pet.id}
+                    value={pet.id}
+                    className="hover:bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{pet.avatar}</span>
+                      <span>{pet.name}</span>
+                    </div>
+                  </SelectItem>
                 ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <span className="w-2 h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></span>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-600">
               Select Category
             </label>
-            <div className="relative">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 focus:ring-2 focus:ring-green-500/20 h-14 px-4 text-gray-700 font-medium appearance-none cursor-pointer"
-              >
-                <option value="">General</option>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
+              <SelectTrigger className="w-full bg-white border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-2">
+                  {selectedCategory && (
+                    <div
+                      className={cn(
+                        "w-3 h-3 rounded-full",
+                        categories.find((c) => c.id === selectedCategory)?.color
+                      )}
+                    />
+                  )}
+                  <SelectValue placeholder="General" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-white border-gray-200 rounded-xl shadow-lg">
                 {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.icon} {category.name}
-                  </option>
+                  <SelectItem
+                    key={category.id}
+                    value={category.id}
+                    className="hover:bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{category.icon}</span>
+                      <span>{category.name}</span>
+                    </div>
+                  </SelectItem>
                 ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Reminder Info Card */}
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-6 py-4 flex items-center gap-3">
-            <div className="w-1 h-6 bg-gradient-to-b from-blue-400 to-indigo-500 rounded-full"></div>
-            <span className="font-bold text-lg">Reminder Info</span>
+        {/* Reminder Info */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium mb-4 -mt-4 -mx-4">
+            Reminder Info
           </div>
 
-          <div className="p-6 space-y-6">
-            <div className="space-y-3">
-              <label className="text-sm font-semibold text-gray-700 block">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
                 Set a reminder for...
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Type here..."
-                  value={reminderText}
-                  onChange={(e) => setReminderText(e.target.value)}
-                  maxLength={100}
-                  className="w-full bg-gray-50/80 border border-gray-200/60 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-300 h-12 px-4 text-gray-700 font-medium"
-                />
-                <div className="text-xs text-gray-400 mt-2 text-right font-medium">
-                  {reminderText.length}/100
-                </div>
+              <Input
+                placeholder="Type here..."
+                value={reminderText}
+                onChange={(e) => setReminderText(e.target.value)}
+                className="bg-gray-50 border-gray-200 rounded-xl focus:bg-white transition-colors"
+              />
+              <div className="text-xs text-gray-400 mt-1 text-right">
+                {reminderText.length}/100
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold text-gray-700">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700">
                   Add Notes (Optional)
                 </label>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowNotes(!showNotes)}
-                  className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold hover:bg-emerald-50 rounded-xl px-4 py-2 transition-all duration-200 border-none bg-transparent cursor-pointer"
+                  className="text-emerald-500 hover:text-emerald-600 text-sm font-medium"
                 >
                   {showNotes ? "Hide" : "Add"}
-                </button>
+                </Button>
               </div>
               {showNotes && (
-                <div className="transform transition-all duration-300 ease-out">
-                  <textarea
-                    placeholder="Add additional notes..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    rows={4}
-                    className="w-full bg-gray-50/80 border border-gray-200/60 rounded-2xl shadow-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all duration-300 resize-none p-4 text-gray-700 font-medium"
-                  />
-                </div>
+                <Textarea
+                  placeholder="Add additional notes..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="bg-gray-50 border-gray-200 rounded-xl focus:bg-white transition-colors animate-fade-in"
+                  rows={3}
+                />
               )}
             </div>
           </div>
         </div>
 
-        {/* Reminder Settings Card */}
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-gradient-to-b from-purple-400 to-indigo-500 rounded-full"></div>
-              <span className="font-bold text-lg">Reminder Settings</span>
-            </div>
-            <ChevronDown className="h-5 w-5 opacity-70" />
+        {/* Reminder Settings */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium mb-4 -mt-4 -mx-4 flex items-center justify-between">
+            Reminder Settings
+            <ChevronDown className="h-4 w-4" />
           </div>
 
-          <div className="p-6 space-y-6">
-            <div className="space-y-3">
-              <label className="text-sm font-semibold text-gray-700 block">
+          <div className="space-y-4">
+            {/* Start Date */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
                 Start Date
               </label>
+              <Popover open={showCalendar} onOpenChange={setShowCalendar}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between bg-gray-50 border-gray-200 rounded-xl hover:bg-white transition-colors"
+                  >
+                    <span className="text-gray-700">
+                      {startDate
+                        ? format(startDate, "dd.MM.yyyy")
+                        : "23.02.205"}
+                    </span>
+                    <Calendar className="h-5 w-5 text-gray-400" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-white border-gray-200 rounded-xl shadow-lg">
+                  <CalendarComponent
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => {
+                      setStartDate(date);
+                      setShowCalendar(false);
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Add End Date */}
+            <div>
+              <Button
+                variant="ghost"
+                onClick={() => setShowEndCalendar(true)}
+                className="text-gray-400 hover:text-gray-600 text-sm font-medium p-0 h-auto"
+              >
+                + Add End Date
+              </Button>
+              {showEndCalendar && (
+                <Popover
+                  open={showEndCalendar}
+                  onOpenChange={setShowEndCalendar}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between bg-gray-50 border-gray-200 rounded-xl hover:bg-white transition-colors mt-2"
+                    >
+                      <span className="text-gray-700">
+                        {endDate
+                          ? format(endDate, "dd.MM.yyyy")
+                          : "Select end date"}
+                      </span>
+                      <Calendar className="h-5 w-5 text-gray-400" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-white border-gray-200 rounded-xl shadow-lg">
+                    <CalendarComponent
+                      mode="single"
+                      selected={endDate}
+                      onSelect={(date) => {
+                        setEndDate(date);
+                        setShowEndCalendar(false);
+                      }}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+
+            {/* Reminder Time */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Reminder Time
+              </label>
               <div className="relative">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-gray-50/80 border border-gray-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 focus:ring-2 focus:ring-blue-500/20 h-14 px-4 text-gray-700 font-medium"
+                <Input
+                  type="time"
+                  value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                  className="bg-gray-50 border-gray-200 rounded-xl focus:bg-white transition-colors pr-10"
                 />
-                <Calendar className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <button
-                onClick={() => setShowEndDate(!showEndDate)}
-                className="text-gray-500 hover:text-gray-700 text-sm font-semibold hover:bg-transparent transition-colors duration-200 border-none bg-transparent cursor-pointer p-0"
-              >
-                + Add End Date
-              </button>
-              {showEndDate && (
-                <div className="transform transition-all duration-300 ease-out">
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full bg-gray-50/80 border border-gray-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 focus:ring-2 focus:ring-purple-500/20 h-14 px-4 text-gray-700 font-medium"
-                    />
-                    <Calendar className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-              )}
+            {/* Reminder Frequency */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Reminder Frequency
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                How often should this reminder repeat?
+              </p>
+              <Select value={frequency} onValueChange={setFrequency}>
+                <SelectTrigger className="w-full bg-gray-50 border-gray-200 rounded-xl hover:bg-white transition-colors">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-200 rounded-xl shadow-lg">
+                  {frequencies.map((freq) => (
+                    <SelectItem
+                      key={freq.value}
+                      value={freq.value}
+                      className="hover:bg-gray-50 rounded-lg"
+                    >
+                      {freq.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+        </div>
+
+        {/* Save Button - Mobile */}
+        <div className="md:hidden">
+          <Button
+            onClick={handleSave}
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-medium transition-colors shadow-lg"
+          >
+            <Save className="h-5 w-5 mr-2" />
+            Save Reminder
+          </Button>
         </div>
       </div>
     </div>

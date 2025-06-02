@@ -13,3 +13,5 @@ export const reminderSchema = z.object({
   time: z.string(),
   frequency: z.enum(["Everyday", "Monthly", "Yearly"]),
 });
+
+export type ReminderFormValues = z.infer<typeof reminderSchema>;
