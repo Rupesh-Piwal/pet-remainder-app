@@ -6,10 +6,10 @@ export const reminderSchema = z.object({
   reminderFor: z
     .string()
     .min(1)
-    .max(500, "Reminder must be under 100 words (approx 500 chars)"),
+    .max(100, "Reminder must be under 100 characters"),
   notes: z.string().optional(),
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
   time: z.string(),
-  frequency: z.enum(["Everyday", "Monthly", "Yearly", ]),
+  frequency: z.enum(["Everyday", "Monthly", "Yearly"]),
 });
