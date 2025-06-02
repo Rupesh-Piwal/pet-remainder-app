@@ -10,7 +10,7 @@ const withPWA = require("next-pwa")({
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  allowedDevOrigins: ["http://192.168.62.147:3000"],
 };
 
 export default withPWA(nextConfig);
